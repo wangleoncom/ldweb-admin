@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" data-theme="rose">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>鹿🦌網站管理後台</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <div class="bg-blur bg-a"></div>
+    <div class="bg-blur bg-b"></div>
+    <div class="bg-pattern"></div>
+
+    <section id="login-screen" class="screen-center">
+      <div class="login-split-card glass reveal-pop">
+        <div class="login-left">
+          <div class="brand-mark xl"><i class="fa-solid fa-leaf"></i></div>
+          <div class="login-brand-text">
+            <h1>鹿🦌網站管理後台</h1>
+            <p>安全、流暢、專業的企業級管理系統。</p>
+          </div>
+          <div class="cute-strip">
+            <span>🛡️ 企業級安全加密</span>
+            <span>📡 資料庫數據即時同步</span>
+            <span>🎀 絕美視覺化管理</span>
+          </div>
+        </div>
+        <div class="login-right">
+          <h2>安全登入</h2>
+          <p class="muted mt-12 mb-24">請輸入您的內部信箱與密碼以進行身份驗證</p>
+          <form id="login-form" class="form-stack">
+            <label>內部信箱</label>
+            <input id="auth-email" class="input" type="email" placeholder="example@domain.com" required>
+            <label>安全密碼</label>
+            <input id="auth-pass" class="input" type="password" placeholder="請輸入密碼" required>
+            <button id="btn-login-submit" class="btn btn-primary btn-block mt-16" type="submit">
+              <i class="fa-solid fa-fingerprint"></i>安全登入
+            </button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <div id="main-ui" class="hidden">
+      <header class="topbar glass">
+        <div class="brand-wrap">
+          <div class="brand-mark small"><i class="fa-solid fa-leaf"></i></div>
+          <div>
+            <div class="top-title-row">
+              <h2>鹿🦌網站管理後台</h2>
+              <span class="badge badge-danger">LD 企業版</span>
+              <span class="badge badge-pink">v7.0</span>
+            </div>
+            <div class="top-meta">
+              <span id="role-display">載入中</span>
+              <span>•</span>
+              <span id="current-admin">-</span>
+              <span>•</span>
+              <span id="system-status"><i class="fa-solid fa-wifi"></i> 等待連線</span>
+            </div>
+          </div>
+        </div>
+        <div class="top-actions">
+          <button id="btn-cute-mode" class="icon-btn" title="動效風格切換"><i class="fa-solid fa-heart"></i></button>
+          <button id="btn-refresh" class="icon-btn" title="重新整理"><i class="fa-solid fa-rotate"></i></button>
+          <button id="btn-theme" class="icon-btn" title="日夜切換"><i id="theme-icon" class="fa-solid fa-moon"></i></button>
+          <button id="btn-logout" class="icon-btn danger" title="安全登出"><i class="fa-solid fa-power-off"></i></button>
+        </div>
+      </header>
+
+      <div class="layout">
+        <aside class="sidebar glass">
+          <div class="sidebar-user">
+            <div class="sidebar-avatar" id="sidebar-avatar">L</div>
+            <div>
+              <strong id="sidebar-name">-</strong>
+              <div class="muted tiny" id="sidebar-role">-</div>
+            </div>
+          </div>
+
+          <div class="nav-title">全域總覽</div>
+          <button class="nav-btn active" data-tab="tab-dashboard"><i class="fa-solid fa-chart-line"></i><span>儀表板</span></button>
+          <button class="nav-btn" data-tab="tab-accounts"><i class="fa-solid fa-id-card"></i><span>帳號管理</span></button>
+          <button class="nav-btn" data-tab="tab-permissions"><i class="fa-solid fa-user-shield"></i><span>權限治理</span></button>
+          <button class="nav-btn" data-tab="tab-exp"><i class="fa-solid fa-star"></i><span>EXP 積分</span></button>
+
+          <div class="nav-title">數位營運</div>
+          <button class="nav-btn" data-tab="tab-promo"><i class="fa-solid fa-store"></i><span>合作店家</span></button>
+          <button class="nav-btn" data-tab="tab-groupbuy"><i class="fa-solid fa-cart-shopping"></i><span>商品與開團</span></button>
+          <button class="nav-btn" data-tab="tab-broadcast"><i class="fa-solid fa-bullhorn"></i><span>主動訊息</span></button>
+          <button class="nav-btn" data-tab="tab-media"><i class="fa-solid fa-images"></i><span>素材中心</span></button>
+          <button class="nav-btn" data-tab="tab-billing"><i class="fa-solid fa-file-invoice-dollar"></i><span>帳務管理</span></button>
+
+          <div class="nav-title">團隊與 AI</div>
+          <button class="nav-btn" data-tab="tab-support"><i class="fa-solid fa-headset"></i><span>客服中心</span><span id="badge-ticket" class="nav-badge hidden">0</span></button>
+          <button class="nav-btn" data-tab="tab-ai"><i class="fa-solid fa-robot"></i><span>AI 觀測站</span></button>
+          <button class="nav-btn" data-tab="tab-inbox"><i class="fa-solid fa-comments"></i><span>內部私訊</span></button>
+
+          <div class="nav-title">系統控制</div>
+          <button class="nav-btn" data-tab="tab-api"><i class="fa-solid fa-plug-circle-bolt"></i><span>API 橋接</span></button>
+          <button class="nav-btn" data-tab="tab-config"><i class="fa-solid fa-sliders"></i><span>全域設定</span></button>
+          <button class="nav-btn" data-tab="tab-audit"><i class="fa-solid fa-shield-halved"></i><span>稽核日誌</span></button>
+        </aside>
+
+        <main class="content">
+          <section id="tab-dashboard" class="tab active-tab">
+            <div class="page-head">
+              <div>
+                <h1>營運儀表板</h1>
+                <p>集中檢視全站帳號、客服、開團、AI 請求與即時活動趨勢。</p>
+              </div>
+            </div>
+            <div class="stats-grid">
+              <div class="stat card hover-lift reveal-slide" style="animation-delay: 0s;"><span>總帳號數</span><strong id="st-users">0</strong><small>註冊人員</small></div>
+              <div class="stat card hover-lift reveal-slide" style="animation-delay: 0.05s;"><span>高階權限</span><strong id="st-staff">0</strong><small>內部團隊</small></div>
+              <div class="stat card hover-lift reveal-slide" style="animation-delay: 0.1s;"><span>待辦客服</span><strong id="st-tickets">0</strong><small>未結案</small></div>
+              <div class="stat card hover-lift reveal-slide" style="animation-delay: 0.15s;"><span>營運專案</span><strong id="st-partners">0</strong><small>店家 + 開團</small></div>
+              <div class="stat card hover-lift reveal-slide" style="animation-delay: 0.2s;"><span>EXP 待發</span><strong id="st-exp">0</strong><small>目標對象</small></div>
+              <div class="stat card hover-lift reveal-slide" style="animation-delay: 0.25s;"><span>資料傳輸</span><strong id="st-ai">0</strong><small>AI + API</small></div>
+            </div>
+            <div class="dashboard-grid">
+              <div class="card pad-24 hover-lift reveal-pop" style="animation-delay: 0.1s;">
+                <div class="panel-head"><h3>近 7 日平台熱度</h3></div>
+                <div class="chart-box"><canvas id="trendChart"></canvas></div>
+              </div>
+              <div class="card pad-24 hover-lift reveal-pop" style="animation-delay: 0.2s;">
+                <div class="panel-head"><h3>核心成員</h3></div>
+                <div id="top-users-list" class="stack"></div>
+              </div>
+              <div class="card pad-24 hover-lift reveal-pop" style="animation-delay: 0.3s;">
+                <div class="panel-head"><h3>功能狀態</h3></div>
+                <div id="feature-summary" class="stack"></div>
+              </div>
+              <div class="card pad-24 hover-lift reveal-pop" style="animation-delay: 0.4s;">
+                <div class="panel-head"><h3>即時稽核</h3></div>
+                <div id="home-audit-list" class="stack"></div>
+              </div>
+            </div>
+          </section>
+
+          <section id="tab-accounts" class="tab">
+            <div class="page-head">
+              <div>
+                <h1>帳號管理中心</h1>
+                <p>顯示與管理全域人員的身份、狀態、權限範圍與登入環境足跡。</p>
+              </div>
+              <div class="page-tools">
+                <input id="account-search" class="input w-320" placeholder="搜尋 顯示名稱 / 信箱 / IP">
+                <select id="account-role-filter" class="input select w-180"><option value="all">全部身份</option></select>
+                <button id="btn-open-create-account" class="btn btn-primary hidden"><i class="fa-solid fa-user-plus"></i>直接新增帳號</button>
+              </div>
+            </div>
+            <div class="card table-card reveal-pop">
+              <div class="table-wrap">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>帳號資料</th>
+                      <th>系統身份</th>
+                      <th>功能許可</th>
+                      <th>系統代號</th>
+                      <th>EXP</th>
+                      <th>狀態</th>
+                      <th>最後出沒時間</th>
+                      <th class="text-right">操作</th>
+                    </tr>
+                  </thead>
+                  <tbody id="account-table-body"></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <section id="tab-permissions" class="tab">
+            <div class="page-head">
+              <div>
+                <h1>權限矩陣治理</h1>
+                <p>配置所有角色的功能存取範圍，以及覆寫個別使用者的極端例外權限。</p>
+              </div>
+            </div>
+            <div class="permission-layout">
+              <div class="card pad-24 hover-lift reveal-pop">
+                <div class="panel-head"><h3>角色預設模板</h3></div>
+                <div class="form-stack">
+                  <label>編輯目標角色</label>
+                  <select id="role-template-select" class="input select"></select>
+                  <label>功能開關</label>
+                  <div id="role-permission-grid" class="perm-grid large"></div>
+                  <div class="inline-actions end">
+                    <button id="btn-save-role-template" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i>覆蓋儲存模板</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card pad-24 hover-lift reveal-pop">
+                <div class="panel-head"><h3>個人權限覆寫</h3></div>
+                <div class="form-stack">
+                  <label>目標帳號</label>
+                  <select id="perm-account-select" class="input select"></select>
+                  <label>強制變更功能</label>
+                  <div id="permission-editor-grid" class="perm-grid large"></div>
+                  <div class="inline-actions wrap end">
+                    <button id="btn-apply-role-preset" class="btn btn-ghost"><i class="fa-solid fa-wand-magic"></i>還原預設</button>
+                    <button id="btn-save-permissions" class="btn btn-primary"><i class="fa-solid fa-shield-halved"></i>強制儲存</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card pad-24 hover-lift reveal-pop">
+                <div class="panel-head"><h3>全域模組主開關</h3></div>
+                <div id="feature-flag-grid" class="feature-flag-grid"></div>
+                <div class="inline-actions end mt-16">
+                  <button id="btn-save-feature-flags" class="btn btn-primary"><i class="fa-solid fa-toggle-on"></i>套用開關</button>
+                </div>
+                <div class="divider"></div>
+                <div class="panel-head"><h3>矩陣統計概覽</h3></div>
+                <div id="permission-matrix" class="matrix-list"></div>
+              </div>
+            </div>
+          </section>
+
+          <section id="tab-exp" class="tab">
+            <div class="page-head">
+              <div>
+                <h1>EXP 積分與獎勵</h1>
+                <p>支援批量發放與單人手動加扣 EXP，每次發放皆有完整操作留痕。</p>
+              </div>
+              <div class="page-tools">
+                <button id="btn-open-exp-grant" class="btn btn-primary hidden"><i class="fa-solid fa-gift"></i>批量發放作業</button>
+              </div>
+            </div>
+            <div class="two-col two-col-wide">
+              <div class="card pad-24 hover-lift reveal-pop">
+                <div class="panel-head"><h3>富豪排行榜</h3></div>
+                <div id="exp-user-list" class="stack"></div>
+              </div>
+              <div class="card pad-24 hover-lift reveal-pop">
+                <div class="panel-head"><h3>資金異動歷史</h3></div>
+                <div id="exp-log-list" class="stack scroll-fill"></div>
+              </div>
+            </div>
+          </section>
+
+          <section id="tab-promo" class="tab">
+            <div class="page-head">
+              <div>
+                <h1>品牌合作店家</h1>
+                <p>管理對外的長期/短期商業合作，建置店家主檔與專案排程。</p>
+              </div>
+              <div class="page-tools">
+                <button id="btn-add-partner" class="btn btn-primary hidden"><i class="fa-solid fa-plus"></i>建置店家檔案</button>
+                <button id="btn-add-campaign" class="btn btn-ghost hidden"><i class="fa-solid fa-clapperboard"></i>立項合作專案</button>
+              </div>
+            </div>
+            <div class="two-col two-col-wide">
+              <div class="card pad-24 reveal-pop">
+                <div class="panel-head"><h3>店家基礎資料庫</h3></div>
+                <div id="partner-list" class="stack"></div>
+              </div>
+              <div class="card pad-24 reveal-pop">
+                <div class="panel-head"><h3>進行中專案排程</h3></div>
+                <div id="campaign-list" class="stack"></div>
+              </div>
+            </div>
+          </section>
+
+          <section id="tab-groupbuy" class="tab">
+            <div class="page-head">
+              <div>
+                <h1>商品與開團引擎</h1>
+                <p>正式電商級別的商品管理架構，包含定價、抽成、運費政策與上下架生命週期。</p>
+              </div>
+              <div class="page-tools">
+                <button id="btn-add-groupbuy" class="btn btn-primary hidden"><i class="fa-solid fa-cart-plus"></i>發布新開團</button>
+              </div>
+            </div>
+            <div id="groupbuy-board" class="kanban-grid reveal-pop"></div>
+          </section>
+
+          <section id="tab-broadcast" class="tab">
+            <div class="page-head">
+              <div>
+                <h1>主動訊息中心</h1>
+                <p>系統公告、行銷推播與排程通知的全域發送站。</p>
+              </div>
+            </div>
+            <div class="two-col two-col-wide">
+              <div class="card pad-24 hover-lift reveal-pop">
+                <div class="panel-head"><h3>編寫發送任務</h3></div>
+                <div class="form-stack">
+                  <label>訊息主旨</label>
+                  <input id="bc-title" class="input" placeholder="吸引人的開場標題...">
+                  <label>投遞分眾</label>
+                  <select id="bc-target-type" class="input select">
+                    <option value="all">廣播：全體用戶</option>
+                    <option value="role">分眾：指定身份</option>
+                    <option value="uid">單點：指定 UID</option>
+                  </select>
+                  <input id="bc-target-value" class="input" placeholder="選填：指定值 (逗號分隔)">
+                  <label>詳細內容</label>
+                  <textarea id="bc-content" class="input textarea large" placeholder="輸入要傳達的具體內容..."></textarea>
+                  <div class="grid-2">
+                    <label class="checkbox-row"><input id="bc-pin" type="checkbox">高優先級 (置頂)</label>
+                    <label class="checkbox-row"><input id="bc-schedule" type="checkbox">延遲排程發送</label>
+                  </div>
+                  <div class="inline-actions end mt-16">
+                    <button id="btn-send-broadcast" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i>執行發送</button>
+                  </div>
+                </div>
+              </div>
+              <div class="card pad-24 hover-lift reveal-pop">
+                <div class="panel-head"><h3>已發布任務紀錄</h3></div>
+                <div id="broadcast-list" class="stack scroll-fill"></div>
+              </div>
+            </div>
+          </section>
+
+          <section id="tab-media" class="tab">
+            <div class="page-head">
+              <div>
+                <h1>媒體素材中心</h1>
+                <p>集中託管全站所有視覺資產：Logo、Banner、活動圖與對話貼圖。</p>
+              </div>
+              <div class="page-tools">
+                <button id="btn-add-media" class="btn btn-primary hidden"><i class="fa-solid fa-cloud-arrow-up"></i>上傳至媒體庫</button>
+              </div>
+            </div>
+            <div class="media-layout">
+              <div class="card pad-24 hover-lift reveal-pop">
+                <div class="panel-head"><h3>空間用量分析</h3></div>
+                <div class="checklist-box">
+                  <label class="checkbox-row"><input type="checkbox" checked disabled> 授權品牌 Logo</label>
+                  <label class="checkbox-row"><input type="checkbox" checked disabled> 高清開團封面</label>
+                  <label class="checkbox-row"><input type="checkbox" checked disabled> 動態推播 Banner</label>
+                  <label class="checkbox-row"><input type="checkbox" checked disabled> 團隊對話圖檔</label>
+                  <label class="checkbox-row"><input type="checkbox" checked disabled> 專屬鹿🦌裝飾圖示</label>
+                  <p class="muted tiny mt-16">外部連結託管模式啟動中。後續若空間不足可一鍵串接 Firebase Cloud Storage。</p>
+                </div>
+              </div>
+              <div class="card pad-24 hover-lift reveal-pop">
+                <div class="panel-head"><h3>全域資產列表</h3></div>
+                <div id="media-list" class="media-grid"></div>
+              </div>
+            </div>
+          </section>
+
+          <section id="tab-billing" class="tab">
+            <div class="page-head">
+              <div>
+                <h1>合作帳務處理</h1>
+                <p>檢視店家分潤、抽成比例與匯款狀態，保障財務透明。</p>
+              </div>
+            </div>
+            <div class="card pad-24 hover-lift reveal-pop">
+              <div id="billing-list" class="stack"></div>
+            </div>
+          </section>
+
+          <section id="tab-support" class="tab">
+            <div class="support-layout">
+              <div class="card support-list-panel hover-lift reveal-pop">
+                <div class="support-head">
+                  <div>
+                    <h3>用戶信箱工單</h3>
+                    <div class="sub-text">收件匣與歷史信件</div>
+                  </div>
+                </div>
+                <div class="pad-20">
+                  <input id="ticket-search" class="input" placeholder="🔍 搜尋主旨、關鍵字...">
+                </div>
+                <div id="ticket-list" class="stack pad-20 pt-0 scroll-fill"></div>
+              </div>
+              <div class="card support-main-panel hover-lift reveal-pop">
+                <div id="support-detail-header" class="support-head">
+                  <div>
+                    <h3>準備就緒</h3>
+                    <div class="sub-text">請由左方選擇要回覆的用戶</div>
+                  </div>
+                </div>
+                <div id="support-thread" class="support-thread"></div>
+                <div class="support-compose">
+                  <div class="form-stack grow">
+                    <label>管理員備註 (僅限內部)</label>
+                    <textarea id="ticket-note" class="input textarea sm" placeholder="填寫處理進度、退款單號..."></textarea>
+                    <label>回覆客戶信件</label>
+                    <textarea id="ticket-reply" class="input textarea sm" placeholder="撰寫溫暖且專業的官方回覆..."></textarea>
+                  </div>
+                  <div class="inline-actions end mt-16">
+                    <button id="btn-save-note" class="btn btn-ghost"><i class="fa-solid fa-note-sticky"></i>悄悄備註</button>
+                    <button id="btn-reply-ticket" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i>送出回覆</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section id="tab-ai" class="tab">
+            <div class="page-head">
+              <div>
+                <h1>AI 模型觀測站</h1>
+                <p>全面監控 AI 助理的回覆品質、延遲時間、API Token 耗損與對話日誌。</p>
+              </div>
+              <div class="page-tools">
+                <label class="checkbox-row pink-switch"><input id="ai-mask-toggle" type="checkbox">啟動個資遮罩防護</label>
+                <button id="btn-purge-ai" class="btn btn-ghost hidden"><i class="fa-solid fa-fire"></i>物理性清理</button>
+              </div>
+            </div>
+            <div id="ai-list" class="stack reveal-pop"></div>
+          </section>
+
+          <section id="tab-inbox" class="tab">
+            <div class="page-head">
+              <div>
+                <h1>團隊加密私訊</h1>
+                <p>內部人員的高效率溝通區，所有訊息皆可一鍵撤回、對話紀錄加密保存。</p>
+              </div>
+              <div class="page-tools">
+                <button id="btn-new-thread" class="btn btn-primary"><i class="fa-solid fa-comment-medical"></i>發起新對話</button>
+                <button id="btn-delete-thread" class="btn btn-danger-soft"><i class="fa-solid fa-trash-can"></i>銷毀此頻道</button>
+              </div>
+            </div>
+            <div class="chat-layout reveal-pop">
+              <div class="card hover-lift chat-sidebar">
+                <div class="chat-sidebar-head">
+                  <input id="thread-search" class="input" placeholder="過濾討論群組...">
+                </div>
+                <div id="thread-list" class="chat-thread-list"></div>
+              </div>
+              <div class="card hover-lift chat-main">
+                <div id="thread-header" class="chat-main-head">
+                  <div>
+                    <h3>無選擇頻道</h3>
+                    <div class="sub-text">請點擊左側頻道進入</div>
+                  </div>
+                </div>
+                <div id="thread-messages" class="chat-message-board"></div>
+                <div class="chat-input-bar">
+                  <textarea id="thread-message" class="input textarea sm grow" placeholder="在加密頻道發送訊息..."></textarea>
+                  <button id="btn-send-thread-message" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i>送出</button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section id="tab-api" class="tab">
+            <div class="page-head">
+              <div>
+                <h1>系統 API 橋接</h1>
+                <p>整合外部服務的鑰匙：AI 串接、信件發送、Webhook 等路由管理。</p>
+              </div>
+              <div class="page-tools">
+                <button id="btn-add-api" class="btn btn-primary hidden"><i class="fa-solid fa-key"></i>登錄新節點</button>
+              </div>
+            </div>
+            <div class="card pad-24 hover-lift reveal-pop">
+              <div id="api-list" class="stack"></div>
+            </div>
+          </section>
+
+          <section id="tab-config" class="tab">
+            <div class="page-head">
+              <div>
+                <h1>全域核心引擎設定</h1>
+                <p>危險區域：掌管系統基礎設施、保留政策、防呆機制與介面主體框架。</p>
+              </div>
+            </div>
+            <div class="three-col-equal">
+              <div class="card pad-24 hover-lift reveal-pop">
+                <div class="panel-head"><h3>API 與模型行為</h3></div>
+                <div class="form-stack">
+                  <label>用戶認證 Endpoint (建帳)</label>
+                  <input id="cfg-create-user-api" class="input" placeholder="https://...">
+                  <label>資料觀測同步 Endpoint</label>
+                  <input id="cfg-ai-api" class="input" placeholder="https://...">
+                  <label>雲端檔案存儲掛載點</label>
+                  <input id="cfg-storage-path" class="input" placeholder="Bucket Path...">
+                  <label>Global AI 基礎人格提示</label>
+                  <textarea id="cfg-ai-prompt" class="input textarea"></textarea>
+                </div>
+              </div>
+              <div class="card pad-24 hover-lift reveal-pop">
+                <div class="panel-head"><h3>法遵與生命週期</h3></div>
+                <div class="form-stack">
+                  <label class="checkbox-row"><input id="cfg-mask-pii" type="checkbox">啟動 AI 遮罩 (去識別化)</label>
+                  <label class="checkbox-row"><input id="cfg-save-raw-prompt" type="checkbox">伺服器保留 Prompt 原始碼</label>
+                  <label class="checkbox-row"><input id="cfg-save-raw-response" type="checkbox">伺服器保留 AI 生成結點</label>
+                  <label class="checkbox-row"><input id="cfg-enable-audit" type="checkbox">強制啟動防篡改稽核追蹤</label>
+                  <label class="checkbox-row"><input id="cfg-enable-cute" type="checkbox">UI 渲染啟用柔和與鹿🦌動畫</label>
+                  <label class="mt-12">資料安全保留天數 (Data Retention)</label>
+                  <input id="cfg-retention-days" class="input" type="number" min="1" step="1" placeholder="30">
+                </div>
+              </div>
+              <div class="card pad-24 hover-lift reveal-pop">
+                <div class="panel-head"><h3>介面與文化呈現</h3></div>
+                <div class="form-stack">
+                  <label>品牌調性備註</label>
+                  <input id="cfg-icon-theme" class="input" placeholder="描述...">
+                  <label>圖標素材使用指南</label>
+                  <textarea id="cfg-note" class="input textarea" placeholder="版權與素材注意事項..."></textarea>
+                  <p class="muted tiny mt-12">這些設定將影響整個平台的前端渲染，請務必謹慎操作。</p>
+                </div>
+              </div>
+            </div>
+            <div class="inline-actions end mt-24">
+              <button id="btn-save-config" class="btn btn-primary"><i class="fa-solid fa-lock"></i>覆蓋引擎配置</button>
+            </div>
+          </section>
+
+          <section id="tab-audit" class="tab">
+            <div class="page-head">
+              <div>
+                <h1>安全稽核中心</h1>
+                <p>嚴密的防篡改日誌：無論是建立人員、刪除資料還是發放積分，所有足跡無所遁形。</p>
+              </div>
+              <div class="page-tools">
+                <button id="btn-clear-old-audit" class="btn btn-danger-soft hidden"><i class="fa-solid fa-eraser"></i>壓縮並清除舊日誌</button>
+              </div>
+            </div>
+            <div class="card pad-24 hover-lift reveal-pop">
+              <div id="audit-list" class="stack"></div>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <div id="create-account-modal" class="modal hidden">
+    <div class="modal-card card reveal-pop wide-modal">
+      <div class="modal-head">
+        <h3>直接新增帳號</h3>
+        <button class="icon-btn modal-close"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="three-col-equal">
+        <div class="form-stack">
+          <label>登入信箱</label>
+          <input id="create-email" class="input" type="email" placeholder="staff@example.com">
+          <label>密碼 (至少 6 碼)</label>
+          <input id="create-password" class="input" type="password" placeholder="請輸入密碼">
+          <label>顯示名稱</label>
+          <input id="create-name" class="input" placeholder="例如：營運小幫手">
+          <label>指派身分</label>
+          <select id="create-role" class="input select"></select>
+          <label>系統代號 / 顯示 UID</label>
+          <input id="create-system-id" class="input" placeholder="選填，系統會自動生成">
+        </div>
+        <div class="form-stack">
+          <label>啟用狀態</label>
+          <select id="create-status" class="input select">
+            <option value="active">啟用中</option>
+            <option value="pending">待啟用</option>
+            <option value="suspended">停權封鎖</option>
+          </select>
+          <label>嚴格範圍限制</label>
+          <div class="checklist-box compact">
+            <label class="checkbox-row"><input id="create-own-partner-only" type="checkbox">鎖定：僅可管理自己的店家</label>
+            <label class="checkbox-row"><input id="create-own-groupbuy-only" type="checkbox">鎖定：僅可管理自己的商品</label>
+            <label class="checkbox-row"><input id="create-can-support-only" type="checkbox">鎖定：強制限制為客服人員</label>
+            <div class="divider mt-12 mb-12"></div>
+            <label class="checkbox-row"><input id="create-feature-partner" type="checkbox" checked>開啟 [店家] 模組</label>
+            <label class="checkbox-row"><input id="create-feature-groupbuy" type="checkbox" checked>開啟 [開團] 模組</label>
+          </div>
+        </div>
+        <div class="form-stack">
+          <label>管理員建立備註</label>
+          <textarea id="create-note" class="input textarea" placeholder="建檔原因..."></textarea>
+          <label class="mt-12">底層權限預覽 (隨身份變動)</label>
+          <div id="create-permissions" class="perm-grid large"></div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost modal-close">取消</button>
+        <button id="btn-create-account" class="btn btn-primary"><i class="fa-solid fa-user-plus"></i>送出建檔</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="account-modal" class="modal hidden">
+    <div class="modal-card card reveal-pop wide-modal">
+      <div class="modal-head">
+        <h3>編輯人員檔案</h3>
+        <button class="icon-btn modal-close"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <input id="edit-doc-id" type="hidden">
+      <div class="three-col-equal">
+        <div class="form-stack">
+          <label>顯示名稱</label>
+          <input id="edit-name" class="input">
+          <label>身份</label>
+          <select id="edit-role" class="input select"></select>
+          <label>真實 Firebase UID（唯讀）</label>
+          <input id="edit-uid" class="input" disabled>
+          <label>系統代號</label>
+          <input id="edit-system-id" class="input">
+          <label>登入信箱</label>
+          <input id="edit-email" class="input" type="email">
+          <label>狀態</label>
+          <select id="edit-status" class="input select">
+            <option value="active">啟用中</option>
+            <option value="suspended">停權封鎖</option>
+            <option value="pending">待啟用</option>
+          </select>
+          <label>EXP (經驗值)</label>
+          <input id="edit-exp" class="input" type="number" min="0">
+        </div>
+        <div class="form-stack">
+          <label>硬體層權限細項</label>
+          <div id="edit-permissions" class="perm-grid large"></div>
+          <label class="mt-16">專屬範圍鎖定</label>
+          <div class="checklist-box compact">
+            <label class="checkbox-row"><input id="edit-own-partner-only" type="checkbox">鎖定：僅管理自己的店家</label>
+            <label class="checkbox-row"><input id="edit-own-groupbuy-only" type="checkbox">鎖定：僅管理自己的開團</label>
+            <label class="checkbox-row"><input id="edit-can-support-only" type="checkbox">鎖定：限制為純客服</label>
+          </div>
+        </div>
+        <div class="form-stack">
+          <label>治理備註</label>
+          <textarea id="edit-note" class="input textarea large"></textarea>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button id="btn-delete-account" class="btn btn-danger-soft hidden"><i class="fa-solid fa-trash"></i>銷毀帳號</button>
+        <button class="btn btn-ghost modal-close">取消</button>
+        <button id="btn-save-account" class="btn btn-primary">儲存變更</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="partner-modal" class="modal hidden">
+    <div class="modal-card card reveal-pop wide-modal">
+      <div class="modal-head">
+        <h3>合作店家主檔</h3>
+        <button class="icon-btn modal-close"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <input id="partner-id" type="hidden">
+      <div class="three-col-equal">
+        <div class="form-stack">
+          <label>品牌/店家名稱</label>
+          <input id="partner-name" class="input">
+          <label>品類</label>
+          <input id="partner-type" class="input" placeholder="服飾 / 餐飲 / 美妝...">
+          <label>負責人</label>
+          <input id="partner-contact" class="input">
+          <label>聯繫管道</label>
+          <input id="partner-channel" class="input" placeholder="Email / IG / 電話">
+          <label>Logo 外部連結</label>
+          <input id="partner-logo" class="input" placeholder="https://...">
+        </div>
+        <div class="form-stack">
+          <label>合作重點摘要</label>
+          <textarea id="partner-summary" class="input textarea"></textarea>
+          <label>狀態</label>
+          <select id="partner-status" class="input select">
+            <option value="draft">洽談中 (草稿)</option>
+            <option value="active">上線合作中</option>
+            <option value="paused">暫停合作</option>
+            <option value="closed">已解約</option>
+          </select>
+          <label>負責主播</label>
+          <input id="partner-owner" class="input" placeholder="指定主播">
+          <label>管理者 UID (權限歸屬用)</label>
+          <input id="partner-manager-uid" class="input">
+        </div>
+        <div class="form-stack">
+          <label>內部機密備註</label>
+          <textarea id="partner-note" class="input textarea large"></textarea>
+          <label class="checkbox-row mt-12"><input id="partner-public" type="checkbox">開放給外部瀏覽</label>
+          <label class="checkbox-row mt-4"><input id="partner-longterm" type="checkbox">升級為長期戰略合作</label>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost modal-close">取消</button>
+        <button id="btn-save-partner" class="btn btn-primary">儲存建檔</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="groupbuy-modal" class="modal hidden">
+    <div class="modal-card card reveal-pop wide-modal xl-modal">
+      <div class="modal-head">
+        <h3>開團引擎設定</h3>
+        <button class="icon-btn modal-close"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <input id="groupbuy-id" type="hidden">
+      <div class="four-col-grid">
+        <div class="form-stack">
+          <label>對外促銷標題</label>
+          <input id="gb-title" class="input">
+          <label>真實商品名稱</label>
+          <input id="gb-product-name" class="input">
+          <label>歸屬品類</label>
+          <input id="gb-category" class="input">
+          <label>所屬店家</label>
+          <input id="gb-brand" class="input">
+          <label>粉絲下單連結</label>
+          <input id="gb-link" class="input" placeholder="https://...">
+          <label>首圖 Banner 網址</label>
+          <input id="gb-cover" class="input" placeholder="https://...">
+        </div>
+        <div class="form-stack">
+          <label>原價</label>
+          <input id="gb-original-price" class="input" type="number" min="0">
+          <label>鹿🦌特談現價</label>
+          <input id="gb-sale-price" class="input" type="number" min="0">
+          <label>吸睛折扣標籤</label>
+          <input id="gb-discount-label" class="input" placeholder="例如：超殺 78 折">
+          <label>物流費用</label>
+          <input id="gb-shipping-fee" class="input" type="number" min="0">
+          <label class="checkbox-row mt-12"><input id="gb-free-shipping" type="checkbox">設定為免運費</label>
+          <label class="checkbox-row"><input id="gb-show-commission" type="checkbox">顯示給店家看抽成比</label>
+          <label class="mt-12">內部實際抽成比例 (%)</label>
+          <input id="gb-commission" class="input" type="number" min="0" step="0.1" placeholder="機密欄位">
+        </div>
+        <div class="form-stack">
+          <label>營運狀態</label>
+          <select id="gb-status" class="input select">
+            <option value="draft">草稿</option>
+            <option value="review">待主管審核</option>
+            <option value="live">火熱上架中</option>
+            <option value="ended">已收單</option>
+          </select>
+          <label>開賣時間</label>
+          <input id="gb-start-at" class="input" type="datetime-local">
+          <label>收單時間</label>
+          <input id="gb-end-at" class="input" type="datetime-local">
+          <label>管理權限者 UID</label>
+          <input id="gb-manager-uid" class="input">
+          <label>目前售出數量</label>
+          <input id="gb-sold-count" class="input" type="number" min="0">
+          <label class="checkbox-row mt-12"><input id="gb-featured" type="checkbox">首頁置頂打光</label>
+          <label class="checkbox-row"><input id="gb-published" type="checkbox">允許對外渲染</label>
+        </div>
+        <div class="form-stack">
+          <label>商品特色打點 (可換行)</label>
+          <textarea id="gb-highlights" class="input textarea sm"></textarea>
+          <label>粉絲常見 QA</label>
+          <textarea id="gb-qa" class="input textarea sm"></textarea>
+          <label>售後 / 換貨政策</label>
+          <textarea id="gb-policy" class="input textarea sm"></textarea>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost modal-close">取消</button>
+        <button id="btn-save-groupbuy" class="btn btn-primary">發布至引擎</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="media-modal" class="modal hidden">
+    <div class="modal-card card reveal-pop wide-modal">
+      <div class="modal-head">
+        <h3>雲端檔案託管</h3>
+        <button class="icon-btn modal-close"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <input id="media-id" type="hidden">
+      <div class="three-col-equal">
+        <div class="form-stack">
+          <label>媒體標題</label>
+          <input id="media-title" class="input">
+          <label>所屬圖庫</label>
+          <select id="media-category" class="input select">
+            <option value="logo">店家 Logo</option>
+            <option value="groupbuy">精修商品圖</option>
+            <option value="banner">全域 Banner</option>
+            <option value="chat">系統貼圖</option>
+            <option value="icon">裝飾圖標</option>
+          </select>
+          <label>CDN 外部連結</label>
+          <input id="media-url" class="input" placeholder="https://...">
+          <label>直接上傳檔案 (擴充功能)</label>
+          <input id="media-file" class="input" type="file" accept="image/*">
+        </div>
+        <div class="form-stack">
+          <label>用途備註</label>
+          <textarea id="media-usage" class="input textarea"></textarea>
+          <label>標籤 (逗號分隔)</label>
+          <input id="media-tags" class="input" placeholder="設計, 修圖...">
+          <label>安全性</label>
+          <select id="media-visibility" class="input select">
+            <option value="private">內部機密</option>
+            <option value="public">完全公開</option>
+          </select>
+        </div>
+        <div class="form-stack">
+          <label>畫面預覽</label>
+          <div class="media-preview-shell"><img id="media-preview" class="media-preview" alt=""></div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost modal-close">取消</button>
+        <button id="btn-save-media" class="btn btn-primary">確認上傳</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="api-modal" class="modal hidden">
+    <div class="modal-card card reveal-pop wide-modal">
+      <div class="modal-head">
+        <h3>串接節點設定</h3>
+        <button class="icon-btn modal-close"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <input id="api-id" type="hidden">
+      <div class="three-col-equal">
+        <div class="form-stack">
+          <label>路由名稱</label>
+          <input id="api-name" class="input">
+          <label>端點 (Endpoint)</label>
+          <input id="api-endpoint" class="input">
+          <label>請求方法</label>
+          <select id="api-method" class="input select">
+            <option>GET</option><option>POST</option><option>PUT</option><option>PATCH</option><option>DELETE</option>
+          </select>
+          <label>提供者 / 平台</label>
+          <input id="api-provider" class="input" placeholder="OpenAI / Google / AWS">
+        </div>
+        <div class="form-stack">
+          <label>服務說明</label>
+          <input id="api-purpose" class="input">
+          <label>底層模型</label>
+          <input id="api-model" class="input">
+          <label>限流設定 (Rate Limit)</label>
+          <input id="api-rate-limit" class="input" placeholder="60 req / min">
+          <label>安全金鑰遮罩</label>
+          <input id="api-key-mask" class="input" placeholder="sk-***********">
+        </div>
+        <div class="form-stack">
+          <label>節點狀態</label>
+          <select id="api-status" class="input select">
+            <option value="active">開啟橋接</option>
+            <option value="paused">阻斷連線</option>
+          </select>
+          <label>開發者備註</label>
+          <textarea id="api-note" class="input textarea"></textarea>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost modal-close">取消</button>
+        <button id="btn-save-api" class="btn btn-primary">儲存節點</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="exp-modal" class="modal hidden">
+    <div class="modal-card card reveal-pop wide-modal">
+      <div class="modal-head">
+        <h3>全域 EXP 批次派發</h3>
+        <button class="icon-btn modal-close"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="three-col-equal">
+        <div class="form-stack">
+          <label>擴散範圍</label>
+          <select id="exp-target-type" class="input select">
+            <option value="all">全服所有用戶</option>
+            <option value="role">限指定身份</option>
+            <option value="uid">精準狙擊 UID</option>
+          </select>
+          <label>匹配值</label>
+          <input id="exp-target-value" class="input" placeholder="身份名稱或 UID (以逗號分隔)">
+          <label>點數額度</label>
+          <input id="exp-amount" class="input" type="number" min="1" value="100">
+        </div>
+        <div class="form-stack">
+          <label>發放財務名目</label>
+          <input id="exp-reason" class="input" placeholder="例如：系統補償 / 聖誕禮包">
+          <label>站內信附文 (將自動推播)</label>
+          <textarea id="exp-message" class="input textarea"></textarea>
+        </div>
+        <div class="form-stack">
+          <label class="checkbox-row mt-12"><input id="exp-send-notice" type="checkbox" checked>啟動通知推送鏈</label>
+          <label class="checkbox-row mt-4"><input id="exp-write-audit" type="checkbox" checked>強制寫入區塊鏈/稽核日誌</label>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost modal-close">取消</button>
+        <button id="btn-submit-exp" class="btn btn-primary">確認發送</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="thread-modal" class="modal hidden">
+    <div class="modal-card card reveal-pop wide-modal">
+      <div class="modal-head">
+        <h3>創立加密頻道</h3>
+        <button class="icon-btn modal-close"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="three-col-equal">
+        <div class="form-stack">
+          <label>頻道主題</label>
+          <input id="new-thread-title" class="input">
+          <label>受邀者 UID (換行或逗號)</label>
+          <textarea id="new-thread-members" class="input textarea"></textarea>
+        </div>
+        <div class="form-stack">
+          <label>頻道介紹</label>
+          <textarea id="new-thread-summary" class="input textarea"></textarea>
+        </div>
+        <div class="form-stack">
+          <label>開場破冰訊息</label>
+          <textarea id="new-thread-message" class="input textarea"></textarea>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost modal-close">取消</button>
+        <button id="btn-create-thread" class="btn btn-primary">創立頻道</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
