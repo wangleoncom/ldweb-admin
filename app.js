@@ -538,7 +538,7 @@ function renderTopbar() {
   document.getElementById('current-admin').textContent = user.displayName;
   document.getElementById('sidebar-name').textContent = user.displayName;
   document.getElementById('sidebar-role').textContent = `${roleLabel(user.role)} ・ ${user.systemId}`;
-  document.getElementById('sidebar-avatar').textContent = user.displayName.slice(0, 1);
+  document.getElementById('sidebar-avatar').textContent = (user.displayName || "L").slice(0, 1);
 }
 
 function renderSidebarForRole() {
@@ -639,7 +639,7 @@ function renderAccounts() {
       <tr>
         <td>
           <div class="table-account">
-            <div class="user-dot">${escapeHtml(user.displayName.slice(0,1))}</div>
+            <div class="user-dot">${escapeHtml((user.displayName || "U").slice(0, 1))}</div>
             <div>
               <strong>${escapeHtml(user.displayName)}</strong>
               <div class="muted tiny">${escapeHtml(user.email)}</div>
