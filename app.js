@@ -161,13 +161,13 @@ function generateEmptyState(icon, title, message) {
   `;
 }
 
-// --- Firebase 資料載入 (完整修復防呆版) ---
+// --- Firebase 資料載入 ---
 async function loadFromFirebase() {
   try {
     const collectionsToFetch = ['users', 'partners', 'campaigns', 'groupBuys', 'supportTickets', 'aiLogs', 'internalThreads', 'broadcasts', 'mediaAssets', 'billingRecords', 'apiRegistry', 'expLogs', 'auditLogs'];
     const storeData = {};
 
-    // 1. 抓取一般集合
+    // 加入防呆，如果某個集合抓不到，預設給空陣列
     for (const col of collectionsToFetch) {
       try {
         const snapshot = await getDocs(collection(db, col));
@@ -179,14 +179,37 @@ async function loadFromFirebase() {
       }
     }
 
-    // 2. 抓取系統集合 (加入 Try-Catch 確保不會引發系統崩潰)
+    // 修復舊資料欄位缺失 (避免 undefined 錯誤)
+storeData.users = (storeData.users || []).map(user => ({
+  id: user?.id || uid('USER'),
+  authUid: user?.authUid || '',
+  email: user?.email || '',
+  password: user?.password || '',
+  displayName: user?.displayName || user?.email || '未命名使用者',
+  systemId: user?.systemId || '',
+  role: user?.role || 'user',
+  status: user?.status || 'active',
+  permissions: user?.permissions || buildPermissionMap([]),
+  exp: user?.exp ?? 0,
+  note: user?.note || '',
+  ownPartnerOnly: !!user?.ownPartnerOnly,
+  ownGroupbuyOnly: !!user?.ownGroupbuyOnly,
+  supportOnly: !!user?.supportOnly,
+  features: {
+    promo: !!user?.features?.promo,
+    groupbuy: !!user?.features?.groupbuy,
+  },
+  createdAt: user?.createdAt || nowISO(),
+  lastLoginAt: user?.lastLoginAt || '',
+  lastLoginIp: user?.lastLoginIp || '',
+  lastLoginDevice: user?.lastLoginDevice || '',
+  tutorialCompleted: user?.tutorialCompleted === true,
+  createdBy: user?.createdBy || 'system',
+}));
+
+    const sysSnapshot = await getDocs(collection(db, 'system'));
     const sysData = {};
-    try {
-      const sysSnapshot = await getDocs(collection(db, 'system'));
-      sysSnapshot.forEach(d => sysData[d.id] = d.data());
-    } catch (sysErr) {
-      console.warn("無法載入集合 system，預設為空。", sysErr);
-    }
+    sysSnapshot.forEach(d => sysData[d.id] = d.data());
 
     storeData.roleTemplates = sysData.roleTemplates || deepClone(ROLE_TEMPLATES);
     storeData.featureFlags = (sysData.featureFlags && Object.keys(sysData.featureFlags).length) ? sysData.featureFlags : { ...DEFAULT_FEATURE_FLAGS };
@@ -268,19 +291,29 @@ function logAudit(action, detail) {
   dbSet('auditLogs', log);
 }
 
+// --- 初始化 ---
 async function init() {
-  // 1. 先從本地或種子建立基礎 state，不要去雲端抓私密集合
-  state.store = seedStore(); 
+  const loader = document.createElement('div');
+  loader.className = 'loading-screen';
+  loader.innerHTML = `
+    <div class="loader-content">
+       <div class="loader-icon"><i class="fa-solid fa-leaf"></i></div>
+       <h2>鹿🦌資料庫同步中</h2>
+       <p>正在與雲端資料庫安全連線...</p>
+    </div>
+  `;
+  document.body.appendChild(loader);
 
-  // 2. 綁定事件、處理 UI（此時還沒跑 loadFromFirebase）
+  state.store = await loadFromFirebase();
+  document.body.removeChild(loader);
+
+  state.aiMask = !!state.store.config.maskPii;
+  state.cuteMode = !!state.store.config.enableCute;
   bindStaticEvents();
   populateRoleOptions();
   renderCreatePermissions();
   applyThemeFromStorage();
   applyCuteMode();
-  
-  // 如果你有部分資料是「公開」的（例如 partners），可以單獨抓，但目前建議先跳過
-  console.log("系統初始化完成，等待用戶登入...");
 }
 
 function bindStaticEvents() {
@@ -527,24 +560,19 @@ function renderAll() {
   saveStore();
 }
 
-// 修改 app.js 第 538 行附近
 function renderTopbar() {
   const user = currentUser();
-  if (!user) return; // 安全檢查
+  if (!user) return;
+
+  const displayName = user.displayName || '未命名使用者';
+  const systemId = user.systemId || '-';
+  const avatarText = (user.displayName || user.email || '?').slice(0, 1);
 
   document.getElementById('role-display').textContent = roleLabel(user.role);
-  document.getElementById('current-admin').textContent = user.displayName || "未知用戶";
-  document.getElementById('sidebar-name').textContent = user.displayName || "未知用戶";
-  document.getElementById('sidebar-role').textContent = `${roleLabel(user.role)} ・ ${user.systemId || ""}`;
-
-  const avatarEl = document.getElementById('sidebar-avatar');
-  // 如果資料中有頭像網址 (假設欄位是 photoURL 或 avatar)，就抓 jpg
-  if (user.photoURL) {
-    avatarEl.innerHTML = `<img src="${user.photoURL}" style="width:100%; height:100%; object-fit:cover; border-radius:14px;">`;
-  } else {
-    // 防呆處理：如果名字不存在，給予預設值 "U"
-    avatarEl.textContent = (user.displayName || "U").slice(0, 1);
-  }
+  document.getElementById('current-admin').textContent = displayName;
+  document.getElementById('sidebar-name').textContent = displayName;
+  document.getElementById('sidebar-role').textContent = `${roleLabel(user.role)} ・ ${systemId}`;
+  document.getElementById('sidebar-avatar').textContent = avatarText;
 }
 
 function renderSidebarForRole() {
@@ -629,41 +657,83 @@ function gatherCheckboxPermissions(selector, dataKey) {
 
 function renderAccounts() {
   if (!hasPermission('accounts.read')) return;
-  const keyword = document.getElementById('account-search').value.trim().toLowerCase();
-  const roleFilter = document.getElementById('account-role-filter').value;
-  const showAudit = state.store.featureFlags['feature.login_audit'];
+  if (!state.store || !Array.isArray(state.store.users)) return;
 
-  const filtered = state.store.users.filter(u => roleFilter === 'all' || u.role === roleFilter).filter(u => !keyword || [u.authUid, u.systemId, u.email, u.displayName, u.lastLoginIp].join(' ').toLowerCase().includes(keyword));
+  const keyword = document.getElementById('account-search')?.value?.trim().toLowerCase() || '';
+  const roleFilter = document.getElementById('account-role-filter')?.value || 'all';
+  const showAudit = !!state.store.featureFlags?.['feature.login_audit'];
+
+  const filtered = state.store.users
+    .filter(u => roleFilter === 'all' || u?.role === roleFilter)
+    .filter(u => {
+      const searchText = [
+        u?.authUid || '',
+        u?.systemId || '',
+        u?.email || '',
+        u?.displayName || '',
+        u?.lastLoginIp || ''
+      ].join(' ').toLowerCase();
+
+      return !keyword || searchText.includes(keyword);
+    });
+
   const tbody = document.getElementById('account-table-body');
-  
+  if (!tbody) return;
+
   if (filtered.length === 0) {
     tbody.innerHTML = `<tr><td colspan="8">${generateEmptyState('fa-solid fa-users', '無相符帳號', '系統中目前沒有符合搜尋條件的帳號。')}</td></tr>`;
     return;
   }
 
-  tbody.innerHTML = filtered.map(user => `
+  tbody.innerHTML = filtered.map(user => {
+    const displayName = user?.displayName || '未命名使用者';
+    const email = user?.email || '-';
+    const initial = (user?.displayName || user?.email || '?').slice(0, 1);
+    const systemId = user?.systemId || '-';
+    const exp = user?.exp ?? 0;
+    const lastTime = user?.lastLoginAt || user?.createdAt || '';
+
+    return `
       <tr>
         <td>
           <div class="table-account">
-            <div class="user-dot">${escapeHtml((user.displayName || "U").slice(0, 1))}</div>
+            <div class="user-dot">${escapeHtml(initial)}</div>
             <div>
-              <strong>${escapeHtml(user.displayName)}</strong>
-              <div class="muted tiny">${escapeHtml(user.email)}</div>
-              ${showAudit && user.lastLoginIp ? `<div class="muted tiny mt-4"><i class="fa-solid fa-network-wired"></i> ${escapeHtml(user.lastLoginIp)}</div>` : ''}
+              <strong>${escapeHtml(displayName)}</strong>
+              <div class="muted tiny">${escapeHtml(email)}</div>
+              ${showAudit && user?.lastLoginIp ? `<div class="muted tiny mt-4"><i class="fa-solid fa-network-wired"></i> ${escapeHtml(user.lastLoginIp)}</div>` : ''}
             </div>
           </div>
         </td>
-        <td>${roleBadge(user.role)}</td>
-        <td><div class="tag-list">${user.features?.promo ? '<span class="badge badge-success">合作</span>' : ''}${user.features?.groupbuy ? '<span class="badge badge-info">開團</span>' : ''}${user.supportOnly ? '<span class="badge badge-warning">客服</span>' : ''}</div></td>
-        <td>${escapeHtml(user.systemId || '-')}</td><td>${user.exp ?? 0}</td><td>${statusBadge(user.status)}</td><td>${formatDate(user.lastLoginAt || user.createdAt)}</td>
-        <td><div class="table-actions">
-          ${hasPermission('accounts.update') ? `<button class="btn btn-ghost" data-action="edit-account" data-id="${user.id}"><i class="fa-solid fa-pen"></i></button>` : ''}
-          ${hasPermission('exp.manage') ? `<button class="btn btn-ghost" data-action="quick-exp" data-id="${user.id}">+EXP</button>` : ''}
-        </div></td>
+        <td>${roleBadge(user?.role)}</td>
+        <td>
+          <div class="tag-list">
+            ${user?.features?.promo ? '<span class="badge badge-success">合作</span>' : ''}
+            ${user?.features?.groupbuy ? '<span class="badge badge-info">開團</span>' : ''}
+            ${user?.supportOnly ? '<span class="badge badge-warning">客服</span>' : ''}
+          </div>
+        </td>
+        <td>${escapeHtml(systemId)}</td>
+        <td>${exp}</td>
+        <td>${statusBadge(user?.status)}</td>
+        <td>${formatDate(lastTime)}</td>
+        <td>
+          <div class="table-actions">
+            ${hasPermission('accounts.update') ? `<button class="btn btn-ghost" data-action="edit-account" data-id="${user.id}"><i class="fa-solid fa-pen"></i></button>` : ''}
+            ${hasPermission('exp.manage') ? `<button class="btn btn-ghost" data-action="quick-exp" data-id="${user.id}">+EXP</button>` : ''}
+          </div>
+        </td>
       </tr>
-    `).join('');
-  tbody.querySelectorAll('[data-action="edit-account"]').forEach(btn => btn.addEventListener('click', () => openEditAccountModal(btn.dataset.id)));
-  tbody.querySelectorAll('[data-action="quick-exp"]').forEach(btn => btn.addEventListener('click', () => quickGrantSingleExp(btn.dataset.id)));
+    `;
+  }).join('');
+
+  tbody.querySelectorAll('[data-action="edit-account"]').forEach(btn => {
+    btn.addEventListener('click', () => openEditAccountModal(btn.dataset.id));
+  });
+
+  tbody.querySelectorAll('[data-action="quick-exp"]').forEach(btn => {
+    btn.addEventListener('click', () => quickGrantSingleExp(btn.dataset.id));
+  });
 }
 
 function statusBadge(status) {
