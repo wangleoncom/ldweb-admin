@@ -161,13 +161,13 @@ function generateEmptyState(icon, title, message) {
   `;
 }
 
-// --- Firebase 資料載入 ---
+// --- Firebase 資料載入 (完整修復防呆版) ---
 async function loadFromFirebase() {
   try {
     const collectionsToFetch = ['users', 'partners', 'campaigns', 'groupBuys', 'supportTickets', 'aiLogs', 'internalThreads', 'broadcasts', 'mediaAssets', 'billingRecords', 'apiRegistry', 'expLogs', 'auditLogs'];
     const storeData = {};
 
-    // 加入防呆，如果某個集合抓不到，預設給空陣列
+    // 1. 抓取一般集合
     for (const col of collectionsToFetch) {
       try {
         const snapshot = await getDocs(collection(db, col));
@@ -179,9 +179,14 @@ async function loadFromFirebase() {
       }
     }
 
-    const sysSnapshot = await getDocs(collection(db, 'system'));
+    // 2. 抓取系統集合 (加入 Try-Catch 確保不會引發系統崩潰)
     const sysData = {};
-    sysSnapshot.forEach(d => sysData[d.id] = d.data());
+    try {
+      const sysSnapshot = await getDocs(collection(db, 'system'));
+      sysSnapshot.forEach(d => sysData[d.id] = d.data());
+    } catch (sysErr) {
+      console.warn("無法載入集合 system，預設為空。", sysErr);
+    }
 
     storeData.roleTemplates = sysData.roleTemplates || deepClone(ROLE_TEMPLATES);
     storeData.featureFlags = (sysData.featureFlags && Object.keys(sysData.featureFlags).length) ? sysData.featureFlags : { ...DEFAULT_FEATURE_FLAGS };
@@ -263,29 +268,19 @@ function logAudit(action, detail) {
   dbSet('auditLogs', log);
 }
 
-// --- 初始化 ---
 async function init() {
-  const loader = document.createElement('div');
-  loader.className = 'loading-screen';
-  loader.innerHTML = `
-    <div class="loader-content">
-       <div class="loader-icon"><i class="fa-solid fa-leaf"></i></div>
-       <h2>鹿🦌資料庫同步中</h2>
-       <p>正在與雲端資料庫安全連線...</p>
-    </div>
-  `;
-  document.body.appendChild(loader);
+  // 1. 先從本地或種子建立基礎 state，不要去雲端抓私密集合
+  state.store = seedStore(); 
 
-  state.store = await loadFromFirebase();
-  document.body.removeChild(loader);
-
-  state.aiMask = !!state.store.config.maskPii;
-  state.cuteMode = !!state.store.config.enableCute;
+  // 2. 綁定事件、處理 UI（此時還沒跑 loadFromFirebase）
   bindStaticEvents();
   populateRoleOptions();
   renderCreatePermissions();
   applyThemeFromStorage();
   applyCuteMode();
+  
+  // 如果你有部分資料是「公開」的（例如 partners），可以單獨抓，但目前建議先跳過
+  console.log("系統初始化完成，等待用戶登入...");
 }
 
 function bindStaticEvents() {
@@ -532,13 +527,24 @@ function renderAll() {
   saveStore();
 }
 
+// 修改 app.js 第 538 行附近
 function renderTopbar() {
   const user = currentUser();
+  if (!user) return; // 安全檢查
+
   document.getElementById('role-display').textContent = roleLabel(user.role);
-  document.getElementById('current-admin').textContent = user.displayName;
-  document.getElementById('sidebar-name').textContent = user.displayName;
-  document.getElementById('sidebar-role').textContent = `${roleLabel(user.role)} ・ ${user.systemId}`;
-  document.getElementById('sidebar-avatar').textContent = (user.displayName || "L").slice(0, 1);
+  document.getElementById('current-admin').textContent = user.displayName || "未知用戶";
+  document.getElementById('sidebar-name').textContent = user.displayName || "未知用戶";
+  document.getElementById('sidebar-role').textContent = `${roleLabel(user.role)} ・ ${user.systemId || ""}`;
+
+  const avatarEl = document.getElementById('sidebar-avatar');
+  // 如果資料中有頭像網址 (假設欄位是 photoURL 或 avatar)，就抓 jpg
+  if (user.photoURL) {
+    avatarEl.innerHTML = `<img src="${user.photoURL}" style="width:100%; height:100%; object-fit:cover; border-radius:14px;">`;
+  } else {
+    // 防呆處理：如果名字不存在，給予預設值 "U"
+    avatarEl.textContent = (user.displayName || "U").slice(0, 1);
+  }
 }
 
 function renderSidebarForRole() {
